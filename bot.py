@@ -12,24 +12,14 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+async def load_extensions():
+    # await bot.load_extension("cogs.message_part")
+    await bot.load_extension("cogs.answering")
+
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
-    
+    await load_extensions()
 
-async def get_last_n_msgs(n: int, channel_id: int):
-    channel = bot.get_channel(channel_id)
-    async for msg in channel.history(limit=n):
-        print(f"{msg.author}: {msg.content}")
-
-@bot.event
-async def on_message(message: discord.Message):
-    if message.author == bot.user:
-        return
-
-    if message.content.endswith('?'):
-        channel = message.channel
-        await get_last_n_msgs(5, channel.id)
-        await message.channel.send('Hello!')
 
 bot.run(token)
