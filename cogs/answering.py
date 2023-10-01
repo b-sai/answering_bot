@@ -30,13 +30,13 @@ class Answering(commands.Cog):
         # output is a generator
         output = replicate.run(os.environ['MODEL'],
             input = {"prompt": f"""answer in as few words as possible.
-                Given the following text:
-                {search_text}
-                
-                Answer the following question:
-                
-                {query}
-                """,
+Given the following text:
+{search_text}
+
+Answer the following question:
+
+{query}
+""",
                 "max_length":30})
         return "".join(list(output))
 
