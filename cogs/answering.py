@@ -13,30 +13,26 @@ class Answering(commands.Cog):
         self.tokenizer = AutoTokenizer.from_pretrained("mrsinghania/asr-question-detection")
 
         self.model = AutoModelForSequenceClassification.from_pretrained("mrsinghania/asr-question-detection")
-        
+
 
         self.metaphor = Metaphor(os.environ["METAPHOR_KEY"])
-        
+
     def get_search_results(self, query):
         response = self.metaphor.search(
         query,
         num_results=1,
         use_autoprompt=True)
-        html_string = response.get_contents().contents[0].extract
+        content = response.get_contents().contents[0]
+        html_string = content.extract
         search_text = BeautifulSoup(html_string, "html.parser").get_text()
-        return search_text, response.get_contents().contents[0].url, response.get_contents().contents[0].title, 
+        score = response.results[0].score
+        return search_text, content.url, content.title, score
+    
     def get_answer(self, query, search_text):
-        
+
         # output is a generator
         output = replicate.run(os.environ['MODEL'],
-            input = {"prompt": f"""answer in as few words as possible.
-Given the following text:
-{search_text}
-
-Answer the following question:
-
-{query}
-""",
+            input = {"prompt": f"answer in as few words as possible.\nGiven the following text:\n{search_text}\nAnswer the following question:\n{query}",
                 "max_length":30})
         return "".join(list(output))
 
@@ -55,11 +51,26 @@ Answer the following question:
 
         if self.is_question(text=message.content):
             query = message.content
-            search_text, url, title = self.get_search_results(query)
-            answer = self.get_answer(query, search_text)
+            try:
+                search_text, url, title, score = self.get_search_results(query)
+            except Exception as E:
+                await message.channel.send(f"Could not fetch results -- API limit exceeded")
+                return
             
-            await message.channel.send(f"{answer}\n\nFor further reading, see [{title}]({url})")
+            if score < 0.25:
+                return
             
+            try:
+                answer = self.get_answer(query, search_text)
+            except Exception as E:
+                answer = None
+
+            if answer is not None:
+                await message.channel.send(f"{answer}\n\nFor further reading, see [{title}]({url})")
+            else:
+                await message.channel.send(f"This result might be relevant [{title}]({url})")
+
+
 
 async def setup(bot):
     await bot.add_cog(Answering(bot))
