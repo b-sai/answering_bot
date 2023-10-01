@@ -24,8 +24,7 @@ class Answering(commands.Cog):
         use_autoprompt=True)
         html_string = response.get_contents().contents[0].extract
         search_text = BeautifulSoup(html_string, "html.parser").get_text()
-        return search_text
-
+        return search_text, response.get_contents().contents[0].url, response.get_contents().contents[0].title, 
     def get_answer(self, query, search_text):
         
         # output is a generator
@@ -56,9 +55,10 @@ class Answering(commands.Cog):
 
         if self.is_question(text=message.content):
             query = message.content
-            search_text = self.get_search_results(query)
+            search_text, url, title = self.get_search_results(query)
             answer = self.get_answer(query, search_text)
-            await message.channel.send(answer)
+            
+            await message.channel.send(f"{answer}\n\nFor further reading, see [{title}]({url})")
             
 
 async def setup(bot):
