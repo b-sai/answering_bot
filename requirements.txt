@@ -1,0 +1,7 @@
+beautifulsoup4==4.12.2
+discord.py==2.3.2
+metaphor_python==0.1.16
+python-dotenv==1.0.0
+replicate==0.13.0
+torch==2.0.0+cu117
+transformers==4.25.1
